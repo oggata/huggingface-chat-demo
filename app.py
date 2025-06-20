@@ -35,9 +35,34 @@ def respond(
     Gradio ChatInterfaceの標準形式に対応
     """
     try:
+        # パラメータを適切な型に変換（API呼び出し時の文字列対策）
+        try:
+            max_tokens = int(max_tokens) if max_tokens is not None else 512
+            # max_tokensが0以下の場合は512に設定
+            if max_tokens <= 0:
+                max_tokens = 1
+        except (ValueError, TypeError):
+            max_tokens = 512
+            
+        try:
+            temperature = float(temperature) if temperature is not None else 0.7
+            # temperatureが0以下の場合は0.7に設定
+            if temperature <= 0:
+                temperature = 0.7
+        except (ValueError, TypeError):
+            temperature = 0.7
+            
+        try:
+            top_p = float(top_p) if top_p is not None else 0.95
+            # top_pが0以下の場合は0.95に設定
+            if top_p <= 0:
+                top_p = 0.95
+        except (ValueError, TypeError):
+            top_p = 0.95
+        
         # システムメッセージと会話履歴を含むプロンプトを構築
         conversation = ""
-        if system_message.strip():
+        if system_message and system_message.strip():
             conversation += f"システム: {system_message}\n"
         
         # 会話履歴を追加
@@ -82,13 +107,11 @@ def respond(
         if "ユーザー:" in full_response:
             full_response = full_response.split("ユーザー:")[0].strip()
         
-        # ストリーミング風の出力
-        for i in range(len(full_response)):
-            response = full_response[:i+1]
-            yield response
+        return full_response
+            
             
     except Exception as e:
-        yield f"エラーが発生しました: {str(e)}"
+        return f"エラーが発生しました: {str(e)}"
 
 """
 Gradio ChatInterfaceを使用したシンプルなチャットボット
